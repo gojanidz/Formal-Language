@@ -1,0 +1,93 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+bool TRACE = true; // Set to true to enable tracing
+
+// Forward declarations
+bool booleanExpression(string input, int &pos);
+bool comparison(string input, int &pos);
+bool expression(string input, int &pos);
+bool booleanRest(string input, int &pos);
+bool compareOp(string input, int &pos);
+bool booleanOp(string input, int &pos);
+
+char nextChar(string input, int &pos) {
+    if (pos < input.length()) return input[pos];
+    else return '\0'; // Null character for end of input
+}
+
+void readChar(string input, int &pos) {
+    if (pos < input.length()) {
+        if (TRACE) cout << "Read char: " << input[pos] << endl;
+        pos++;
+    }
+}
+
+bool numberOrVariable(string input, int &pos) {
+    char c = nextChar(input, pos);
+    if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')) {
+        readChar(input, pos);
+        return true;
+    } else if (c == '(') {
+        readChar(input, pos);
+        if (booleanExpression(input, pos)) {
+            if (nextChar(input, pos) == ')') {
+                readChar(input, pos);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool comparison(string input, int &pos) {
+    return numberOrVariable(input, pos) && compareOp(input, pos) && numberOrVariable(input, pos);
+}
+
+bool compareOp(string input, int &pos) {
+    char c = nextChar(input, pos);
+    if (c == '<' || c == '>' || c == '=') {
+        readChar(input, pos);
+        return true;
+    }
+    return false;
+}
+
+bool booleanExpression(string input, int &pos) {
+    if (comparison(input, pos)) {
+        return booleanRest(input, pos);
+    }
+    return false;
+}
+
+bool booleanRest(string input, int &pos) {
+    if (booleanOp(input, pos)) {
+        if (!comparison(input, pos)) return false;
+        return booleanRest(input, pos);
+    }
+    return true;
+}
+
+bool booleanOp(string input, int &pos) {
+    char c = nextChar(input, pos);
+    if (c == '&' || c == '|') {
+        readChar(input, pos);
+        return true;
+    }
+    return false;
+}
+
+bool parseBooleanExpression(string input) {
+    int pos = 0;
+    bool isValid = booleanExpression(input, pos);
+    return isValid && pos == input.length(); // Ensure entire input is consumed
+}
+
+int main() {
+    string inputs[] = {"a<5", "b>6", "c=7", "a<b&c>d", "a<b<c", "2&a=3"};
+    for (string input : inputs) {
+        cout << "Input: " << input << " is " << (parseBooleanExpression(input) ? "true" : "false") << endl;
+    }
+    return 0;
+}
